@@ -7,6 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
+    "lint:biome": "biome check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "knip": "knip",
+    "stryker": "stryker run",
+    "commitlint": "commitlint --from=HEAD~1",
     "preview": "vite preview"
   },
   "dependencies": {

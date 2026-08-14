@@ -1,0 +1,21 @@
+{
+  "name": "TecnoRevest Architectural Boundaries Contract",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "layer": "utils",
+      "path": "src/utils/**",
+      "cannotImport": ["src/components/**", "src/services/**"]
+    },
+    {
+      "layer": "services",
+      "path": "src/services/**",
+      "cannotImport": ["src/components/**"]
+    },
+    {
+      "layer": "components",
+      "path": "src/components/**",
+      "cannotImport": ["src/main.jsx"]
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import React from "react";
+import { observability } from "../services/observability.js";
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -12,6 +13,7 @@ export class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
+    observability.captureException(error, { componentStack: errorInfo?.componentStack });
   }
 
   render() {
