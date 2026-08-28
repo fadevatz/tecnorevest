@@ -48,6 +48,20 @@ export default function AgendaPanel({ projects = [], teams = [], onUpdateProject
     }
   };
 
+  const handleToday = () => {
+    const todayDate = new Date();
+    setCurrentYear(todayDate.getFullYear());
+    setCurrentMonth(todayDate.getMonth());
+    setTimeout(() => {
+      if (scrollContainerRef.current) {
+        const dayColWidth = 44;
+        const targetX = Math.max(0, (todayDate.getDate() - 2) * dayColWidth);
+        scrollContainerRef.current.scrollTo({ left: targetX, behavior: "smooth" });
+      }
+    }, 60);
+  };
+
+
   // Helper de dia da semana
   const getWeekday = (day) => {
     const date = new Date(currentYear, currentMonth, day);
@@ -318,7 +332,7 @@ export default function AgendaPanel({ projects = [], teams = [], onUpdateProject
 
         <div className="agenda-nav" style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
           {/* Alternador de Agrupamento */}
-          <div className="group-filter-toggle" style={{ display: "inline-flex", background: "var(--bg-light)", border: "1px solid var(--card-border)", borderRadius: "20px", padding: "3px", gap: "4px" }}>
+          <div className="group-filter-toggle" style={{ display: "inline-flex", background: "var(--bg-light)", border: "1px solid var(--card-border)", borderRadius: "var(--radius-lg)", padding: "3px", gap: "4px" }}>
             <button
               className={`btn-filter ${filterGroupBy === "projects" ? "active" : ""}`}
               onClick={() => setFilterGroupBy("projects")}
@@ -327,8 +341,8 @@ export default function AgendaPanel({ projects = [], teams = [], onUpdateProject
                 background: filterGroupBy === "projects" ? "var(--primary)" : "transparent",
                 color: filterGroupBy === "projects" ? "white" : "var(--text-secondary)",
                 padding: "6px 14px",
-                borderRadius: "16px",
-                fontSize: "0.8rem",
+                borderRadius: "var(--radius-md)",
+                fontSize: "var(--font-size-xs)",
                 fontWeight: "600",
                 cursor: "pointer",
                 transition: "var(--transition)"
@@ -344,8 +358,8 @@ export default function AgendaPanel({ projects = [], teams = [], onUpdateProject
                 background: filterGroupBy === "teams" ? "var(--primary)" : "transparent",
                 color: filterGroupBy === "teams" ? "white" : "var(--text-secondary)",
                 padding: "6px 14px",
-                borderRadius: "16px",
-                fontSize: "0.8rem",
+                borderRadius: "var(--radius-md)",
+                fontSize: "var(--font-size-xs)",
                 fontWeight: "600",
                 cursor: "pointer",
                 transition: "var(--transition)"
@@ -355,17 +369,42 @@ export default function AgendaPanel({ projects = [], teams = [], onUpdateProject
             </button>
           </div>
 
+
           {/* Navegação por Mês */}
-          <button className="btn-secondary" onClick={handlePrevMonth} style={{ padding: "8px 14px" }}>
-            &larr; Anterior
-          </button>
-          <span className="month-indicator" style={{ fontWeight: "700", minWidth: "160px", textAlign: "center" }}>
-            {MONTHS[currentMonth]} de {currentYear}
-          </span>
-          <button className="btn-secondary" onClick={handleNextMonth} style={{ padding: "8px 14px" }}>
-            Próximo &rarr;
-          </button>
+          <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+            <button className="btn-secondary" onClick={handlePrevMonth} style={{ padding: "6px 12px", fontSize: "var(--font-size-xs)" }}>
+              &larr; Ant
+            </button>
+            <button className="btn-secondary" onClick={handleToday} style={{ padding: "6px 12px", fontSize: "var(--font-size-xs)", fontWeight: "600" }}>
+              Hoje
+            </button>
+            <span className="month-indicator" style={{ fontWeight: "700", minWidth: "130px", textAlign: "center" }}>
+              {MONTHS[currentMonth]} {currentYear}
+            </span>
+            <button className="btn-secondary" onClick={handleNextMonth} style={{ padding: "6px 12px", fontSize: "var(--font-size-xs)" }}>
+              Próx &rarr;
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* Dica visual de rolagem para dispositivos móveis */}
+      <div 
+        className="mobile-scroll-hint" 
+        style={{ 
+          display: "none", 
+          alignItems: "center", 
+          gap: "8px", 
+          fontSize: "var(--font-size-xs)", 
+          color: "var(--primary)", 
+          background: "var(--primary-light)", 
+          padding: "8px 12px", 
+          borderRadius: "var(--radius-sm)", 
+          marginBottom: "12px",
+          fontWeight: "600"
+        }}
+      >
+        <span>↔</span> Arraste a tabela para os lados para navegar pelos dias do mês.
       </div>
 
       {/* Tabela do Cronograma Gantt Scheduler */}
@@ -378,6 +417,7 @@ export default function AgendaPanel({ projects = [], teams = [], onUpdateProject
         onMouseMove={handleMouseMove}
         style={{ cursor: isMouseDown ? "grabbing" : "grab", userSelect: "none" }}
       >
+
         <table className="calendar-grid-table">
           <thead>
             <tr>
@@ -391,7 +431,7 @@ export default function AgendaPanel({ projects = [], teams = [], onUpdateProject
                   style={{ width: `calc((100% - 200px) / ${daysInMonth})` }}
                 >
                   <div style={{ fontSize: "0.92rem", fontWeight: "bold" }}>{String(day).padStart(2, "0")}</div>
-                  <div style={{ fontSize: "0.68rem", opacity: 0.7, marginTop: "2px" }}>{getWeekday(day)}</div>
+                  <div style={{ fontSize: "var(--font-size-xs)", opacity: 0.7, marginTop: "2px" }}>{getWeekday(day)}</div>
                 </th>
               ))}
             </tr>
@@ -414,14 +454,15 @@ export default function AgendaPanel({ projects = [], teams = [], onUpdateProject
                     {/* Primeira Coluna: Detalhes do Recurso */}
                     <td className="project-column" style={{ height: `${rowMinHeight}px` }}>
                       <div className="project-badge-cell">
-                        <div style={{ fontSize: "0.88rem", color: "var(--text-primary)", fontWeight: "600" }}>
+                        <div style={{ fontSize: "var(--font-size-sm)", color: "var(--text-primary)", fontWeight: "600" }}>
                           {row.title}
                         </div>
-                        <div style={{ fontSize: "0.74rem", color: "var(--text-secondary)", marginTop: "2px" }}>
+                        <div style={{ fontSize: "var(--font-size-xs)", color: "var(--text-secondary)", marginTop: "2px" }}>
                           {row.subtitle}
                         </div>
                       </div>
                     </td>
+
 
                     {/* Células de Dias para Drop e Interatividade */}
                     {daysArray.map(day => {

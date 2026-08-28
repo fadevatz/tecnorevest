@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 
 // ==========================================
-// 1. MÓDULO DE FUNCIONÁRIOS (Com Edição)
+// 1. MÓDULO DE FUNCIONÁRIOS (Com Edição e Confirmação)
 // ==========================================
 export function EmployeesModule({ employees, teams, onAddEmployee, onUpdateEmployee, onDeleteEmployee }) {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [teamId, setTeamId] = useState("");
   const [editingEmpId, setEditingEmpId] = useState(null); // null = Criando novo
+  const [deleteConfirmItem, setDeleteConfirmItem] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -54,16 +55,11 @@ export function EmployeesModule({ employees, teams, onAddEmployee, onUpdateEmplo
     setTeamId("");
   };
 
-  const getTeamName = (id) => {
-    const team = teams.find(t => t.id === id);
-    return team ? team.name : "Sem Equipe";
-  };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <div>
         <h2>Cadastro de Funcionários</h2>
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", marginTop: "4px" }}>
+        <p style={{ color: "var(--text-secondary)", fontSize: "var(--font-size-sm)", marginTop: "4px" }}>
           Gerencie a equipe técnica da Tecno Revest e faça a atribuição de equipes.
         </p>
       </div>
@@ -71,7 +67,7 @@ export function EmployeesModule({ employees, teams, onAddEmployee, onUpdateEmplo
       <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "24px", alignItems: "start" }}>
         {/* Formulário */}
         <form onSubmit={handleSubmit} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          <h3 style={{ fontSize: "1.05rem", borderBottom: "1px solid var(--card-border)", paddingBottom: "8px", marginBottom: "4px" }}>
+          <h3 style={{ fontSize: "var(--font-size-md)", borderBottom: "1px solid var(--card-border)", paddingBottom: "8px", marginBottom: "4px" }}>
             {editingEmpId ? "Editar Funcionário" : "Novo Funcionário"}
           </h3>
           
@@ -124,7 +120,7 @@ export function EmployeesModule({ employees, teams, onAddEmployee, onUpdateEmplo
         {/* Tabela de Listagem */}
         <div className="glass-card" style={{ padding: "0", overflow: "hidden" }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--card-border)" }}>
-            <h3 style={{ fontSize: "1.05rem" }}>Profissionais Cadastrados</h3>
+            <h3 style={{ fontSize: "var(--font-size-md)" }}>Profissionais Cadastrados</h3>
           </div>
           <div className="custom-table-container" style={{ border: "none" }}>
             <table className="custom-table">
@@ -152,15 +148,15 @@ export function EmployeesModule({ employees, teams, onAddEmployee, onUpdateEmplo
                         {(() => {
                           const team = teams.find(t => t.id === emp.teamId);
                           if (!team) {
-                            return <span style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Sem Equipe</span>;
+                            return <span style={{ color: "var(--text-secondary)", fontSize: "var(--font-size-sm)" }}>Sem Equipe</span>;
                           }
                           return (
                             <span style={{ 
                               padding: "3.5px 8px", 
-                              borderRadius: "4px", 
+                              borderRadius: "var(--radius-sm)", 
                               background: `${team.color}15`,
                               color: team.color,
-                              fontSize: "0.82rem",
+                              fontSize: "var(--font-size-xs)",
                               fontWeight: "600",
                               border: `1px solid ${team.color}30`
                             }}>
@@ -172,16 +168,14 @@ export function EmployeesModule({ employees, teams, onAddEmployee, onUpdateEmplo
                       <td style={{ textAlign: "center" }}>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                           <button 
-                            className="btn-secondary" 
+                            className="btn-secondary btn-sm" 
                             onClick={() => handleEditClick(emp)}
-                            style={{ padding: "5px 10px", fontSize: "0.75rem" }}
                           >
                             Editar
                           </button>
                           <button 
-                            className="btn-logout" 
-                            onClick={() => onDeleteEmployee(emp.id)}
-                            style={{ padding: "5px 10px", fontSize: "0.75rem" }}
+                            className="btn-danger btn-sm" 
+                            onClick={() => setDeleteConfirmItem({ id: emp.id, name: emp.name })}
                           >
                             Excluir
                           </button>
@@ -195,18 +189,46 @@ export function EmployeesModule({ employees, teams, onAddEmployee, onUpdateEmplo
           </div>
         </div>
       </div>
+
+      {/* Modal de Confirmação de Exclusão */}
+      {deleteConfirmItem && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "420px" }}>
+            <h3 style={{ fontSize: "var(--font-size-md)", marginBottom: "10px" }}>Confirmar Exclusão</h3>
+            <p style={{ fontSize: "var(--font-size-sm)", color: "var(--text-secondary)", marginBottom: "20px" }}>
+              Tem certeza de que deseja excluir o funcionário <strong>{deleteConfirmItem.name}</strong>? Esta ação não poderá ser desfeita.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button type="button" className="btn-secondary" onClick={() => setDeleteConfirmItem(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={() => {
+                  onDeleteEmployee(deleteConfirmItem.id);
+                  setDeleteConfirmItem(null);
+                }}
+              >
+                Confirmar Exclusão
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ==========================================
-// 2. MÓDULO DE EQUIPES (Com Edição)
+// 2. MÓDULO DE EQUIPES (Com Edição e Confirmação)
 // ==========================================
 export function TeamsModule({ teams, onAddTeam, onUpdateTeam, onDeleteTeam }) {
   const [name, setName] = useState("");
   const [leader, setLeader] = useState("");
   const [color, setColor] = useState("#2258A3");
   const [editingTeamId, setEditingTeamId] = useState(null); // null = Criando novo
+  const [deleteConfirmItem, setDeleteConfirmItem] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -255,7 +277,7 @@ export function TeamsModule({ teams, onAddTeam, onUpdateTeam, onDeleteTeam }) {
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <div>
         <h2>Cadastro de Equipes</h2>
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", marginTop: "4px" }}>
+        <p style={{ color: "var(--text-secondary)", fontSize: "var(--font-size-sm)", marginTop: "4px" }}>
           Defina as frentes de trabalho da Tecno Revest e selecione as cores de exibição da agenda.
         </p>
       </div>
@@ -263,7 +285,7 @@ export function TeamsModule({ teams, onAddTeam, onUpdateTeam, onDeleteTeam }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "24px", alignItems: "start" }}>
         {/* Formulário */}
         <form onSubmit={handleSubmit} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          <h3 style={{ fontSize: "1.05rem", borderBottom: "1px solid var(--card-border)", paddingBottom: "8px", marginBottom: "4px" }}>
+          <h3 style={{ fontSize: "var(--font-size-md)", borderBottom: "1px solid var(--card-border)", paddingBottom: "8px", marginBottom: "4px" }}>
             {editingTeamId ? "Editar Equipe" : "Nova Equipe"}
           </h3>
 
@@ -300,7 +322,7 @@ export function TeamsModule({ teams, onAddTeam, onUpdateTeam, onDeleteTeam }) {
                 onChange={(e) => setColor(e.target.value)}
                 style={{ width: "52px", height: "42px", padding: "2px", cursor: "pointer", border: "1px solid var(--card-border)", borderRadius: "var(--radius-sm)" }}
               />
-              <span style={{ fontSize: "0.85rem", fontFamily: "monospace" }}>{color.toUpperCase()}</span>
+              <span style={{ fontSize: "var(--font-size-sm)", fontFamily: "monospace" }}>{color.toUpperCase()}</span>
               <div className="color-preview-box" style={{ backgroundColor: color }} />
             </div>
           </div>
@@ -320,7 +342,7 @@ export function TeamsModule({ teams, onAddTeam, onUpdateTeam, onDeleteTeam }) {
         {/* Tabela de Listagem */}
         <div className="glass-card" style={{ padding: "0", overflow: "hidden" }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--card-border)" }}>
-            <h3 style={{ fontSize: "1.05rem" }}>Equipes Cadastradas</h3>
+            <h3 style={{ fontSize: "var(--font-size-md)" }}>Equipes Cadastradas</h3>
           </div>
           <div className="custom-table-container" style={{ border: "none" }}>
             <table className="custom-table">
@@ -347,24 +369,22 @@ export function TeamsModule({ teams, onAddTeam, onUpdateTeam, onDeleteTeam }) {
                       <td>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <span 
-                            style={{ backgroundColor: team.color, width: "14px", height: "14px", display: "inline-block", borderRadius: "50%", border: "1px solid rgba(0,0,0,0.1)" }}
+                            style={{ backgroundColor: team.color, width: "14px", height: "14px", display: "inline-block", borderRadius: "50%", border: "1px solid var(--card-border)" }}
                           />
-                          <span style={{ fontSize: "0.85rem", fontFamily: "monospace", color: "var(--text-secondary)" }}>{team.color}</span>
+                          <span style={{ fontSize: "var(--font-size-sm)", fontFamily: "monospace", color: "var(--text-secondary)" }}>{team.color}</span>
                         </div>
                       </td>
                       <td style={{ textAlign: "center" }}>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                           <button 
-                            className="btn-secondary" 
+                            className="btn-secondary btn-sm" 
                             onClick={() => handleEditClick(team)}
-                            style={{ padding: "5px 10px", fontSize: "0.75rem" }}
                           >
                             Editar
                           </button>
                           <button 
-                            className="btn-logout" 
-                            onClick={() => onDeleteTeam(team.id)}
-                            style={{ padding: "5px 10px", fontSize: "0.75rem" }}
+                            className="btn-danger btn-sm" 
+                            onClick={() => setDeleteConfirmItem({ id: team.id, name: team.name })}
                           >
                             Excluir
                           </button>
@@ -378,21 +398,44 @@ export function TeamsModule({ teams, onAddTeam, onUpdateTeam, onDeleteTeam }) {
           </div>
         </div>
       </div>
+
+      {/* Modal de Confirmação de Exclusão */}
+      {deleteConfirmItem && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "420px" }}>
+            <h3 style={{ fontSize: "var(--font-size-md)", marginBottom: "10px" }}>Confirmar Exclusão</h3>
+            <p style={{ fontSize: "var(--font-size-sm)", color: "var(--text-secondary)", marginBottom: "20px" }}>
+              Tem certeza de que deseja excluir a equipe <strong>{deleteConfirmItem.name}</strong>? Esta ação não poderá ser desfeita.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button type="button" className="btn-secondary" onClick={() => setDeleteConfirmItem(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={() => {
+                  onDeleteTeam(deleteConfirmItem.id);
+                  setDeleteConfirmItem(null);
+                }}
+              >
+                Confirmar Exclusão
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ==========================================
-// 3. MÓDULO DE LISTAGEM DE PROJETOS (Restaurada)
+// 3. MÓDULO DE LISTAGEM DE PROJETOS (Com Confirmação)
 // ==========================================
 export function ProjectsModule({ projects, teams, onEditProject, onDeleteProject }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-
-  const getTeamName = (id) => {
-    const team = teams.find(t => t.id === id);
-    return team ? team.name : "Nenhuma";
-  };
+  const [deleteConfirmItem, setDeleteConfirmItem] = useState(null);
 
   const getStatusLabel = (status) => {
     switch (status) {
@@ -415,13 +458,13 @@ export function ProjectsModule({ projects, teams, onEditProject, onDeleteProject
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h2>Lista Geral de Projetos</h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", marginTop: "4px" }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: "var(--font-size-sm)", marginTop: "4px" }}>
             Pesquise, filtre e edite ou exclua programações de obras.
           </p>
         </div>
       </div>
 
-      {/* Barra de Filtros Tradicional */}
+      {/* Barra de Filtros */}
       <div className="glass-card" style={{ display: "flex", gap: "16px", padding: "16px 20px" }}>
         <div className="form-group" style={{ flex: "2", marginBottom: "0" }}>
           <input
@@ -443,7 +486,7 @@ export function ProjectsModule({ projects, teams, onEditProject, onDeleteProject
         </div>
       </div>
 
-      {/* Lista Tradicional Restaurada */}
+      {/* Tabela de Projetos */}
       <div className="glass-card" style={{ padding: "0", overflow: "hidden" }}>
         <div className="custom-table-container" style={{ border: "none" }}>
           <table className="custom-table">
@@ -482,15 +525,15 @@ export function ProjectsModule({ projects, teams, onEditProject, onDeleteProject
                       <td>
                         <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
                           {projectTeams.length === 0 ? (
-                            <span style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Sem Equipe</span>
+                            <span style={{ color: "var(--text-secondary)", fontSize: "var(--font-size-sm)" }}>Sem Equipe</span>
                           ) : (
                             projectTeams.map(t => (
                               <span key={t.id} style={{ 
                                 padding: "3px 7px", 
-                                borderRadius: "4px", 
+                                borderRadius: "var(--radius-sm)", 
                                 background: `${t.color}15`,
                                 color: t.color,
-                                fontSize: "0.8rem",
+                                fontSize: "var(--font-size-xs)",
                                 fontWeight: "600",
                                 border: `1px solid ${t.color}30`
                               }}>
@@ -500,10 +543,10 @@ export function ProjectsModule({ projects, teams, onEditProject, onDeleteProject
                           )}
                         </div>
                       </td>
-                      <td style={{ fontSize: "0.85rem", fontWeight: "600" }}>
+                      <td style={{ fontSize: "var(--font-size-sm)", fontWeight: "600" }}>
                         {stageList.length} {stageList.length === 1 ? "etapa" : "etapas"}
                       </td>
-                      <td style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                      <td style={{ fontSize: "var(--font-size-sm)", whiteSpace: "nowrap" }}>
                         {proj.startDate ? proj.startDate.split("-").reverse().join("/") : "-"} - {proj.endDate ? proj.endDate.split("-").reverse().join("/") : "-"}
                       </td>
                       <td>
@@ -514,16 +557,14 @@ export function ProjectsModule({ projects, teams, onEditProject, onDeleteProject
                       <td style={{ textAlign: "center" }}>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                           <button 
-                            className="btn-secondary" 
+                            className="btn-secondary btn-sm" 
                             onClick={() => onEditProject(proj)}
-                            style={{ padding: "6px 10px", fontSize: "0.75rem" }}
                           >
                             Editar
                           </button>
                           <button 
-                            className="btn-logout" 
-                            onClick={() => onDeleteProject(proj.id)}
-                            style={{ padding: "6px 10px", fontSize: "0.75rem" }}
+                            className="btn-danger btn-sm" 
+                            onClick={() => setDeleteConfirmItem({ id: proj.id, name: proj.name })}
                           >
                             Excluir
                           </button>
@@ -537,6 +578,33 @@ export function ProjectsModule({ projects, teams, onEditProject, onDeleteProject
           </table>
         </div>
       </div>
+
+      {/* Modal de Confirmação de Exclusão */}
+      {deleteConfirmItem && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "420px" }}>
+            <h3 style={{ fontSize: "var(--font-size-md)", marginBottom: "10px" }}>Confirmar Exclusão</h3>
+            <p style={{ fontSize: "var(--font-size-sm)", color: "var(--text-secondary)", marginBottom: "20px" }}>
+              Tem certeza de que deseja excluir o projeto <strong>{deleteConfirmItem.name}</strong>? Esta ação não poderá ser desfeita.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button type="button" className="btn-secondary" onClick={() => setDeleteConfirmItem(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={() => {
+                  onDeleteProject(deleteConfirmItem.id);
+                  setDeleteConfirmItem(null);
+                }}
+              >
+                Confirmar Exclusão
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

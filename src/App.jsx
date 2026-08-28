@@ -105,8 +105,11 @@ export function normalizeProject(project, teams = []) {
 }
 
 export default function App() {
-  // Estado para esconder a barra lateral (Nav)
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  // Estado para esconder a barra lateral (Nav) - Inicia colapsado em mobile
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return typeof window !== "undefined" && window.innerWidth <= 768;
+  });
+
   // Estado do usuário / Autenticação
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("tecnorevest_user");
@@ -168,6 +171,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const handleSelectTab = (tab) => {
+    if (typeof window !== "undefined" && window.innerWidth <= 768) {
+      setIsSidebarCollapsed(true);
+    }
     if (tab === activeTab) return;
     setIsTabTransitioning(true);
     setActiveTab(tab);
@@ -175,6 +181,7 @@ export default function App() {
       setIsTabTransitioning(false);
     }, 280);
   };
+
 
   // Estado para Tema Escuro (Dark Mode)
   const [darkMode, setDarkMode] = useState(() => {
@@ -477,6 +484,41 @@ export default function App() {
     setModalContextStartDate("");
   };
 
+  // Atalhos Globais de Teclado (Fase 3 - Adapt)
+  useEffect(() => {
+    function handleKeyDown(e) {
+      const isInputFocused = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+
+      if (e.key === "Escape") {
+        setIsProjectModalOpen(false);
+        setIsPasswordModalOpen(false);
+        setIsUserMenuOpen(false);
+        setEditingProject(null);
+        return;
+      }
+
+      if (isInputFocused) return;
+
+      // Alt + N: Novo Projeto
+      if (e.altKey && (e.key === "n" || e.key === "N")) {
+        e.preventDefault();
+        openNewProjectModal();
+      }
+
+      // / : Focar busca na interface
+      if (e.key === "/") {
+        e.preventDefault();
+        const searchInput = document.querySelector(".sidebar-search-input") || document.querySelector("input[type='text']");
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [teams]);
+
   const handleSaveProject = (e) => {
     e.preventDefault();
 
@@ -554,7 +596,7 @@ export default function App() {
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
             className="header-icon-btn"
             title={isSidebarCollapsed ? "Mostrar Menu" : "Esconder Menu"}
-            style={{ marginRight: "12px", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", fontSize: "1.2rem" }}
+            style={{ marginRight: "12px", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", fontSize: "var(--font-size-lg)" }}
           >
             ☰
           </button>
@@ -568,7 +610,7 @@ export default function App() {
             className="header-icon-btn" 
             onClick={() => setDarkMode(!darkMode)}
             title={darkMode ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
-            style={{ fontSize: "1.2rem" }}
+            style={{ fontSize: "var(--font-size-lg)" }}
           >
             {darkMode ? "☀️" : "🌙"}
           </button>
@@ -601,15 +643,15 @@ export default function App() {
                   width: "210px",
                   background: "var(--card-bg)",
                   border: "1px solid var(--card-border)",
-                  borderRadius: "12px",
-                  boxShadow: "0 10px 28px rgba(0, 0, 0, 0.2)",
+                  borderRadius: "var(--radius-lg)",
+                  boxShadow: "var(--shadow-lg)",
                   padding: "6px 0",
                   zIndex: 9999
                 }}
               >
                 <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--card-border)" }}>
-                  <div style={{ fontWeight: "700", fontSize: "0.88rem", color: "var(--text-primary)" }}>{user.name}</div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "2px" }}>{user.role}</div>
+                  <div style={{ fontWeight: "700", fontSize: "var(--font-size-sm)", color: "var(--text-primary)" }}>{user.name}</div>
+                  <div style={{ fontSize: "var(--font-size-xs)", color: "var(--text-secondary)", marginTop: "2px" }}>{user.role}</div>
                 </div>
 
                 <button
@@ -624,7 +666,7 @@ export default function App() {
                     border: "none",
                     textAlign: "left",
                     color: "var(--text-primary)",
-                    fontSize: "0.85rem",
+                    fontSize: "var(--font-size-sm)",
                     fontWeight: "600",
                     cursor: "pointer",
                     display: "flex",
@@ -651,8 +693,8 @@ export default function App() {
                     background: "transparent",
                     border: "none",
                     textAlign: "left",
-                    color: "#e53e3e",
-                    fontSize: "0.85rem",
+                    color: "var(--danger)",
+                    fontSize: "var(--font-size-sm)",
                     fontWeight: "600",
                     cursor: "pointer",
                     display: "flex",
@@ -667,16 +709,21 @@ export default function App() {
                 </button>
               </div>
             )}
+
           </div>
         </div>
       </header>
 
       {/* Workspace Principal (Sidebar + Conteúdo) */}
       <div className="app-container">
+        {!isSidebarCollapsed && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarCollapsed(true)} />
+        )}
         
         {/* ==========================================
            SIDEBAR LATERAL (Branca categorizada)
            ========================================== */}
+
         <aside className={`sidebar ${isSidebarCollapsed ? "collapsed" : ""}`}>
           <div>
             <ul className="sidebar-menu">
@@ -888,7 +935,7 @@ export default function App() {
                       >
                         <span>📋 Selecionar Obra em Andamento</span>
                         {editingProject && (
-                          <span style={{ fontSize: "0.7rem", background: "var(--primary)", color: "#fff", padding: "1px 6px", borderRadius: "10px", fontWeight: "600" }}>
+                          <span style={{ fontSize: "var(--font-size-xs)", background: "var(--primary)", color: "#fff", padding: "1px 6px", borderRadius: "var(--radius-md)", fontWeight: "600" }}>
                             Cadastrada
                           </span>
                         )}
@@ -897,7 +944,7 @@ export default function App() {
                         id="select-existing-proj"
                         value={editingProject ? editingProject.id : ""}
                         onChange={(e) => handleSelectExistingProject(e.target.value)}
-                        style={{ fontWeight: "600", fontSize: "0.84rem", padding: "6px 8px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                        style={{ fontWeight: "600", fontSize: "var(--font-size-sm)", padding: "6px 8px", borderRadius: "var(--radius-sm)", border: "1px solid var(--card-border)" }}
                       >
                         <option value="">+ [ Criar Nova Obra / Projeto do Zero ]</option>
                         {projects.filter(p => p.status !== "completed" && p.status !== "cancelled").map(proj => (
@@ -906,7 +953,7 @@ export default function App() {
                           </option>
                         ))}
                       </select>
-                      <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>
+                      <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-secondary)" }}>
                         {editingProject 
                           ? `Editando obra "${editingProject.name}".`
                           : "Escolha uma obra existente acima ou preencha os dados abaixo."}
@@ -914,7 +961,7 @@ export default function App() {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="proj-name" style={{ fontSize: "0.82rem" }}>Nome do Projeto / Obra *</label>
+                      <label htmlFor="proj-name" style={{ fontSize: "var(--font-size-xs)" }}>Nome do Projeto / Obra *</label>
                       <input
                         type="text"
                         id="proj-name"
@@ -922,12 +969,12 @@ export default function App() {
                         onChange={(e) => setFormProjName(e.target.value)}
                         placeholder="Ex: Aplicação de Poliuretano em Galpão"
                         required
-                        style={{ padding: "8px 10px", fontSize: "0.86rem" }}
+                        style={{ padding: "8px 10px", fontSize: "var(--font-size-sm)" }}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="proj-client" style={{ fontSize: "0.82rem" }}>Cliente / Local *</label>
+                      <label htmlFor="proj-client" style={{ fontSize: "var(--font-size-xs)" }}>Cliente / Local *</label>
                       <input
                         type="text"
                         id="proj-client"
@@ -935,17 +982,18 @@ export default function App() {
                         onChange={(e) => setFormProjClient(e.target.value)}
                         placeholder="Ex: Indústrias Metalúrgicas S.A."
                         required
-                        style={{ padding: "8px 10px", fontSize: "0.86rem" }}
+                        style={{ padding: "8px 10px", fontSize: "var(--font-size-sm)" }}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="proj-status" style={{ fontSize: "0.82rem" }}>Status Geral do Projeto</label>
+                      <label htmlFor="proj-status" style={{ fontSize: "var(--font-size-xs)" }}>Status Geral do Projeto</label>
+
                       <select 
                         id="proj-status" 
                         value={formProjStatus} 
                         onChange={(e) => setFormProjStatus(e.target.value)}
-                        style={{ padding: "8px 10px", fontSize: "0.86rem" }}
+                        style={{ padding: "8px 10px", fontSize: "var(--font-size-sm)" }}
                       >
                         <option value="planned">Programado (Futuro)</option>
                         <option value="progress">Em Andamento</option>
@@ -965,7 +1013,7 @@ export default function App() {
                         type="button"
                         className="btn-secondary"
                         onClick={handleAddStageItem}
-                        style={{ fontSize: "0.75rem", padding: "4px 8px", borderColor: "var(--primary)", color: "var(--primary)", whiteSpace: "nowrap" }}
+                        style={{ fontSize: "var(--font-size-xs)", padding: "4px 8px", borderColor: "var(--primary)", color: "var(--primary)", whiteSpace: "nowrap" }}
                       >
                         + Adicionar Etapa
                       </button>
@@ -977,7 +1025,7 @@ export default function App() {
                           key={stage.id || idx}
                           style={{
                             padding: "12px",
-                            borderRadius: "8px",
+                            borderRadius: "var(--radius-md)",
                             background: "var(--bg-light)",
                             border: "1px solid var(--card-border)",
                             display: "flex",
@@ -987,7 +1035,7 @@ export default function App() {
                           }}
                         >
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--card-border)", paddingBottom: "4px" }}>
-                            <span style={{ fontWeight: "700", fontSize: "0.82rem", color: "var(--primary)" }}>
+                            <span style={{ fontWeight: "700", fontSize: "var(--font-size-xs)", color: "var(--primary)" }}>
                               Etapa {idx + 1}
                             </span>
                             {formProjStages.length > 1 && (
@@ -997,8 +1045,8 @@ export default function App() {
                                 style={{
                                   background: "transparent",
                                   border: "none",
-                                  color: "#ef4444",
-                                  fontSize: "0.72rem",
+                                  color: "var(--danger)",
+                                  fontSize: "var(--font-size-xs)",
                                   fontWeight: "600",
                                   cursor: "pointer"
                                 }}
@@ -1009,24 +1057,24 @@ export default function App() {
                           </div>
 
                           <div className="form-group">
-                            <label style={{ fontSize: "0.76rem" }}>Nome da Etapa</label>
+                            <label style={{ fontSize: "var(--font-size-xs)" }}>Nome da Etapa</label>
                             <input
                               type="text"
                               value={stage.name}
                               onChange={(e) => handleStageItemChange(idx, "name", e.target.value)}
                               placeholder={`Ex: Etapa ${idx + 1} - Aplicação de Piso`}
                               required
-                              style={{ padding: "5px 8px", fontSize: "0.82rem" }}
+                              style={{ padding: "5px 8px", fontSize: "var(--font-size-xs)" }}
                             />
                           </div>
 
                           <div className="form-group">
-                            <label style={{ fontSize: "0.76rem" }}>Equipe Responsável *</label>
+                            <label style={{ fontSize: "var(--font-size-xs)" }}>Equipe Responsável *</label>
                             <select
                               value={stage.teamId}
                               onChange={(e) => handleStageItemChange(idx, "teamId", e.target.value)}
                               required
-                              style={{ padding: "5px 8px", fontSize: "0.82rem" }}
+                              style={{ padding: "5px 8px", fontSize: "var(--font-size-xs)" }}
                             >
                               {teams.length === 0 ? (
                                 <option value="">Nenhuma equipe cadastrada</option>
@@ -1040,36 +1088,36 @@ export default function App() {
 
                           <div className="form-row">
                             <div className="form-group">
-                              <label style={{ fontSize: "0.76rem" }}>Data Início *</label>
+                              <label style={{ fontSize: "var(--font-size-xs)" }}>Data Início *</label>
                               <input
                                 type="date"
                                 value={stage.startDate}
                                 onChange={(e) => handleStageItemChange(idx, "startDate", e.target.value)}
                                 required
-                                style={{ padding: "5px 8px", fontSize: "0.82rem" }}
+                                style={{ padding: "5px 8px", fontSize: "var(--font-size-xs)" }}
                               />
                             </div>
                             <div className="form-group">
-                              <label style={{ fontSize: "0.76rem" }}>Data Término *</label>
+                              <label style={{ fontSize: "var(--font-size-xs)" }}>Data Término *</label>
                               <input
                                 type="date"
                                 value={stage.endDate}
                                 onChange={(e) => handleStageItemChange(idx, "endDate", e.target.value)}
                                 required
-                                style={{ padding: "5px 8px", fontSize: "0.82rem" }}
+                                style={{ padding: "5px 8px", fontSize: "var(--font-size-xs)" }}
                               />
                             </div>
                           </div>
 
                           {/* Horário da Etapa */}
                           <div className="form-group">
-                            <label style={{ fontSize: "0.76rem" }}>Horário</label>
+                            <label style={{ fontSize: "var(--font-size-xs)" }}>Horário</label>
                             <div className="period-toggle-group" style={{ height: "30px" }}>
                               <button
                                 type="button"
                                 className={`period-toggle-btn ${stage.period === "full_day" ? "active" : ""}`}
                                 onClick={() => handleStageItemChange(idx, "period", "full_day")}
-                                style={{ fontSize: "0.72rem" }}
+                                style={{ fontSize: "var(--font-size-xs)" }}
                               >
                                 Dia Inteiro
                               </button>
@@ -1077,7 +1125,7 @@ export default function App() {
                                 type="button"
                                 className={`period-toggle-btn ${stage.period === "custom" ? "active" : ""}`}
                                 onClick={() => handleStageItemChange(idx, "period", "custom")}
-                                style={{ fontSize: "0.72rem" }}
+                                style={{ fontSize: "var(--font-size-xs)" }}
                               >
                                 Específico
                               </button>
@@ -1087,21 +1135,21 @@ export default function App() {
                           {stage.period === "custom" && (
                             <div className="form-row" style={{ marginTop: "-4px" }}>
                               <div className="form-group">
-                                <label style={{ fontSize: "0.72rem" }}>Hora Início</label>
+                                <label style={{ fontSize: "var(--font-size-xs)" }}>Hora Início</label>
                                 <input
                                   type="time"
                                   value={stage.startTime || "08:00"}
                                   onChange={(e) => handleStageItemChange(idx, "startTime", e.target.value)}
-                                  style={{ padding: "4px 6px", fontSize: "0.78rem" }}
+                                  style={{ padding: "4px 6px", fontSize: "var(--font-size-xs)" }}
                                 />
                               </div>
                               <div className="form-group">
-                                <label style={{ fontSize: "0.72rem" }}>Hora Fim</label>
+                                <label style={{ fontSize: "var(--font-size-xs)" }}>Hora Fim</label>
                                 <input
                                   type="time"
                                   value={stage.endTime || "17:00"}
                                   onChange={(e) => handleStageItemChange(idx, "endTime", e.target.value)}
-                                  style={{ padding: "4px 6px", fontSize: "0.78rem" }}
+                                  style={{ padding: "4px 6px", fontSize: "var(--font-size-xs)" }}
                                 />
                               </div>
                             </div>
@@ -1110,6 +1158,7 @@ export default function App() {
                       ))}
                     </div>
                   </div>
+
                 </div>
               </div>
 
@@ -1121,9 +1170,8 @@ export default function App() {
                 {editingProject && (
                   <button 
                     type="button" 
-                    className="btn-secondary" 
+                    className="btn-danger" 
                     onClick={() => handleDeleteProject(editingProject.id)}
-                    style={{ border: "1px solid rgba(239, 68, 68, 0.3)", color: "#f87171" }}
                   >
                     Excluir Obra
                   </button>

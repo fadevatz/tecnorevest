@@ -7,12 +7,20 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies & Build Output
 node_modules
 dist
 dist-ssr
-*.local
 
-# Editor directories and files
+# Environment variables & Secrets (CRITICAL SECURITY)
+.env
+.env.*
+!.env.example
+
+# IDE & Tool Directories
+.claude
+.codex
+.impeccable
 .vscode/*
 !.vscode/extensions.json
 .idea

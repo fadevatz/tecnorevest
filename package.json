@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@bitnoi.se/react-scheduler": "^0.3.1",
+    "@supabase/supabase-js": "^2.112.4",
     "dayjs": "^1.11.21",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
