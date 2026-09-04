@@ -1,14 +1,16 @@
 import React from "react";
 
 export default function Dashboard({ projects, teams, employees, setActiveTab }) {
-  // Calcular métricas originais
+  // Calcular métricas
   const totalTeams = teams.length;
   const totalEmployees = employees.length;
   const totalProjects = projects.length;
-  const progressProjects = projects.filter(p => p.status === "progress").length;
-
-  // Projetos em execução hoje (status === "progress")
-  const activeToday = projects.filter(p => p.status === "progress");
+  
+  // Obras ativas / em operação (Em Andamento, Aguardando ou Indisponível)
+  const activeObras = projects.filter(p => 
+    p.status === "progress" || p.status === "waiting" || p.status === "unavailable"
+  );
+  const activeProjectsCount = activeObras.length;
 
   const getTeamName = (id) => {
     const team = teams.find(t => t.id === id);
@@ -20,23 +22,21 @@ export default function Dashboard({ projects, teams, employees, setActiveTab }) 
     return team ? team.color : "var(--primary)";
   };
 
-  // Agrupar frentes em andamento por data de início para um visual organizado
-  const groupedProjects = {};
-  activeToday.forEach(proj => {
-    const dateKey = proj.startDate;
-    if (!groupedProjects[dateKey]) {
-      groupedProjects[dateKey] = [];
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "progress":
+        return <span className="status-badge progress">Em Andamento</span>;
+      case "waiting":
+        return <span className="status-badge waiting">Aguardando</span>;
+      case "unavailable":
+        return <span className="status-badge unavailable">Indisponível</span>;
+      case "completed":
+        return <span className="status-badge completed">Concluído</span>;
+      case "cancelled":
+        return <span className="status-badge cancelled">Cancelado</span>;
+      default:
+        return <span className="status-badge planned">Programado</span>;
     }
-    groupedProjects[dateKey].push(proj);
-  });
-
-  const sortedDates = Object.keys(groupedProjects).sort((a, b) => new Date(b) - new Date(a));
-
-  const formatGroupHeaderDate = (dateKey) => {
-    const [y, m, d] = dateKey.split("-");
-    const dateObj = new Date(y, m - 1, d);
-    const options = { day: "numeric", month: "long", year: "numeric" };
-    return dateObj.toLocaleDateString("pt-BR", options);
   };
 
   return (
@@ -50,7 +50,7 @@ export default function Dashboard({ projects, teams, employees, setActiveTab }) 
       </div>
 
       {/* ==========================================
-         GRID DE INDICADORES ORIGINAIS (Restaurado)
+         GRID DE INDICADORES
          ========================================== */}
       <div className="metrics-grid motion-cascade" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
         <div className="glass-card metric-card">
@@ -72,7 +72,7 @@ export default function Dashboard({ projects, teams, employees, setActiveTab }) 
         <div className="glass-card metric-card">
           <div className="metric-details">
             <h3>Projetos Ativos</h3>
-            <div className="metric-value" style={{ color: "var(--secondary)" }}>{progressProjects}</div>
+            <div className="metric-value" style={{ color: "var(--secondary)" }}>{activeProjectsCount}</div>
           </div>
           <div className="metric-icon">⚙️</div>
         </div>
@@ -89,17 +89,17 @@ export default function Dashboard({ projects, teams, employees, setActiveTab }) 
       {/* Frentes de Trabalho */}
       <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "24px" }}>
         
-        {/* Projetos em Execução */}
+        {/* Projetos/Obras em Operação */}
         <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <h3 style={{ fontSize: "1.1rem", fontWeight: "700" }}>Frentes de Trabalho em Andamento</h3>
+          <h3 style={{ fontSize: "1.1rem", fontWeight: "700" }}>Frentes de Trabalho & Obras</h3>
           
           <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "8px" }}>
-            {activeToday.length === 0 ? (
+            {activeObras.length === 0 ? (
               <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--text-secondary)" }}>
-                Nenhum projeto em andamento no momento.
+                Nenhuma obra em andamento, aguardando ou indisponível no momento.
               </div>
             ) : (
-              activeToday.map(proj => {
+              activeObras.map(proj => {
                 let stages = proj.stages;
                 if (typeof stages === "string") {
                   try { stages = JSON.parse(stages); } catch (e) { stages = null; }
@@ -124,8 +124,11 @@ export default function Dashboard({ projects, teams, employees, setActiveTab }) 
                     }}
                   >
                     <div>
-                      <h4 style={{ fontSize: "0.92rem", fontWeight: "600", marginBottom: "4px" }}>{proj.name}</h4>
-                      <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                        <h4 style={{ fontSize: "0.92rem", fontWeight: "600", margin: 0 }}>{proj.name}</h4>
+                        {getStatusBadge(proj.status)}
+                      </div>
+                      <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0 }}>
                         Cliente: <strong>{proj.client}</strong> | Equipes: <strong>{teamNames}</strong> ({stageList.length} {stageList.length === 1 ? "etapa" : "etapas"})
                       </p>
                     </div>
@@ -148,37 +151,59 @@ export default function Dashboard({ projects, teams, employees, setActiveTab }) 
         <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <h3 style={{ fontSize: "1.1rem", fontWeight: "700" }}>Status das Obras</h3>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "10px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginTop: "6px" }}>
             {/* Programado */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "6px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
                 <span>Programado</span>
                 <span>{totalProjects ? Math.round((projects.filter(p => p.status === "planned").length / totalProjects) * 100) : 0}%</span>
               </div>
               <div style={{ height: "8px", background: "rgba(0,0,0,0.05)", borderRadius: "4px", overflow: "hidden" }}>
-                <div style={{ width: `${totalProjects ? (projects.filter(p => p.status === "planned").length / totalProjects) * 100 : 0}%`, height: "100%", background: "var(--info)" }} />
+                <div style={{ width: `${totalProjects ? (projects.filter(p => p.status === "planned").length / totalProjects) * 100 : 0}%`, height: "100%", background: "#2b6cb0" }} />
               </div>
             </div>
 
             {/* Em Andamento */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "6px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
                 <span>Em Andamento</span>
                 <span>{totalProjects ? Math.round((projects.filter(p => p.status === "progress").length / totalProjects) * 100) : 0}%</span>
               </div>
               <div style={{ height: "8px", background: "rgba(0,0,0,0.05)", borderRadius: "4px", overflow: "hidden" }}>
-                <div style={{ width: `${totalProjects ? (projects.filter(p => p.status === "progress").length / totalProjects) * 100 : 0}%`, height: "100%", background: "var(--secondary)" }} />
+                <div style={{ width: `${totalProjects ? (projects.filter(p => p.status === "progress").length / totalProjects) * 100 : 0}%`, height: "100%", background: "#c05621" }} />
+              </div>
+            </div>
+
+            {/* Aguardando */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
+                <span>Aguardando</span>
+                <span>{totalProjects ? Math.round((projects.filter(p => p.status === "waiting").length / totalProjects) * 100) : 0}%</span>
+              </div>
+              <div style={{ height: "8px", background: "rgba(0,0,0,0.05)", borderRadius: "4px", overflow: "hidden" }}>
+                <div style={{ width: `${totalProjects ? (projects.filter(p => p.status === "waiting").length / totalProjects) * 100 : 0}%`, height: "100%", background: "#d97706" }} />
+              </div>
+            </div>
+
+            {/* Indisponível */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
+                <span>Indisponível</span>
+                <span>{totalProjects ? Math.round((projects.filter(p => p.status === "unavailable").length / totalProjects) * 100) : 0}%</span>
+              </div>
+              <div style={{ height: "8px", background: "rgba(0,0,0,0.05)", borderRadius: "4px", overflow: "hidden" }}>
+                <div style={{ width: `${totalProjects ? (projects.filter(p => p.status === "unavailable").length / totalProjects) * 100 : 0}%`, height: "100%", background: "#6b7280" }} />
               </div>
             </div>
 
             {/* Concluído */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "6px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
                 <span>Concluído</span>
                 <span>{totalProjects ? Math.round((projects.filter(p => p.status === "completed").length / totalProjects) * 100) : 0}%</span>
               </div>
               <div style={{ height: "8px", background: "rgba(0,0,0,0.05)", borderRadius: "4px", overflow: "hidden" }}>
-                <div style={{ width: `${totalProjects ? (projects.filter(p => p.status === "completed").length / totalProjects) * 100 : 0}%`, height: "100%", background: "var(--success)" }} />
+                <div style={{ width: `${totalProjects ? (projects.filter(p => p.status === "completed").length / totalProjects) * 100 : 0}%`, height: "100%", background: "#234e52" }} />
               </div>
             </div>
           </div>

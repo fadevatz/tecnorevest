@@ -441,6 +441,8 @@ export function ProjectsModule({ projects, teams, onEditProject, onDeleteProject
     switch (status) {
       case "completed": return "Concluído";
       case "progress": return "Em Andamento";
+      case "waiting": return "Aguardando";
+      case "unavailable": return "Indisponível";
       case "cancelled": return "Cancelado";
       default: return "Programado";
     }
@@ -480,6 +482,8 @@ export function ProjectsModule({ projects, teams, onEditProject, onDeleteProject
             <option value="">Todos os Status</option>
             <option value="planned">Programados</option>
             <option value="progress">Em Andamento</option>
+            <option value="waiting">Aguardando</option>
+            <option value="unavailable">Indisponíveis</option>
             <option value="completed">Concluídos</option>
             <option value="cancelled">Cancelados</option>
           </select>

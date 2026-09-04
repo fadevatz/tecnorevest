@@ -913,6 +913,18 @@ input:focus, select:focus, textarea:focus {
   border: 1.5px solid #feebc8;
 }
 
+.status-badge.waiting {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1.5px solid #fde68a;
+}
+
+.status-badge.unavailable {
+  background: #f3f4f6;
+  color: #4b5563;
+  border: 1.5px solid #e5e7eb;
+}
+
 .status-badge.completed {
   background: #e6fffa;
   color: #234e52;

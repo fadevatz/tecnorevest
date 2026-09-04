@@ -127,6 +127,8 @@ export default function AgendaPanel({ projects = [], teams = [], onUpdateProject
     switch (status) {
       case "completed": return "#38a169";
       case "progress": return "#dd6b20";
+      case "waiting": return "#d97706";
+      case "unavailable": return "#6b7280";
       case "cancelled": return "#e53e3e";
       default: return "#3182ce";
     }

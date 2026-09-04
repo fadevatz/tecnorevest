@@ -292,11 +292,9 @@ export default function App() {
   };
 
   const handleDeleteTeam = (id) => {
-    if (window.confirm("Deseja realmente excluir esta equipe? Os projetos vinculados a ela permanecerão.")) {
-      setTeams(prev => prev.filter(t => t.id !== id));
-      setEmployees(prev => prev.map(emp => emp.teamId === id ? { ...emp, teamId: "" } : emp));
-      deleteTeamApi(id);
-    }
+    setTeams(prev => prev.filter(t => t.id !== id));
+    setEmployees(prev => prev.map(emp => emp.teamId === id ? { ...emp, teamId: "" } : emp));
+    deleteTeamApi(id);
   };
 
   const handleUpdateTeam = (updatedTeam) => {
@@ -310,10 +308,8 @@ export default function App() {
   };
 
   const handleDeleteEmployee = (id) => {
-    if (window.confirm("Deseja excluir este funcionário?")) {
-      setEmployees(prev => prev.filter(e => e.id !== id));
-      deleteEmployeeApi(id);
-    }
+    setEmployees(prev => prev.filter(e => e.id !== id));
+    deleteEmployeeApi(id);
   };
 
   const handleUpdateEmployee = (updatedEmp) => {
@@ -335,12 +331,10 @@ export default function App() {
   };
 
   const handleDeleteProject = (id) => {
-    if (window.confirm("Deseja excluir este projeto de serviço?")) {
-      setProjects(prev => prev.filter(p => p.id !== id));
-      deleteProjectApi(id);
-      if (editingProject && editingProject.id === id) {
-        closeProjectModal();
-      }
+    setProjects(prev => prev.filter(p => p.id !== id));
+    deleteProjectApi(id);
+    if (editingProject && editingProject.id === id) {
+      closeProjectModal();
     }
   };
 
@@ -997,6 +991,8 @@ export default function App() {
                       >
                         <option value="planned">Programado (Futuro)</option>
                         <option value="progress">Em Andamento</option>
+                        <option value="waiting">Aguardando</option>
+                        <option value="unavailable">Indisponível</option>
                         <option value="completed">Concluído</option>
                         <option value="cancelled">Cancelado</option>
                       </select>
